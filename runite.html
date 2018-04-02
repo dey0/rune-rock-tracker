@@ -5,6 +5,13 @@
 		.table td {
 		   text-align: center;   
 		}
+		*.unselectable {
+			-moz-user-select: none;
+			-khtml-user-select: none;
+			-webkit-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+		}
 	</style>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -17,44 +24,57 @@
 		// add: queue of worlds
 		// split up rocks
 		window.onload = function() {
-			var worlds = [2,3,4,5,6,7,9,10,11,12,13,14,15,17,18,19,20,21,22,23,24,25,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,46,46,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,65,66,67,68,69,70,73,74,75,76,77,78,86,86,87,88,89,90,91,92];
+			var worlds = [302, 303, 304, 305, 306, 307, 309, 310, 311, 312, 313, 314, 315, 317, 318, 319, 320, 321, 322,
+						  323, 324, 325, 327, 328, 329, 330, 331, 332, 333, 334, 336, 337, 338, 339, 340, 341, 342, 343,
+						  344, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 365,
+						  366, 367, 368, 369, 370, 373, 374, 375, 376, 377, 378, 386, 387, 388, 389, 390, 391, 392];
 			var rows = Math.floor((worlds.length + 3) / 4);
 			var table = document.getElementById("runite");
 			
 			for (var x = 0; x < rows; x++) {
 				var row = table.insertRow();
 				row.scope = "row";
-				
-				
-				createCell(row, 300 + worlds[x]);
-				createCell(row, 300 + worlds[x + rows]);
-				createCell(row, 300 + worlds[x + rows * 2]);
-				if (x + rows * 3 < worlds.length)
-					createCell(row, "3" + worlds[x + rows * 3]);
+				var ncols = x + rows * 3 < worlds.length ? 4 : 3;
+				for (var y = 0; y < ncols; y++) {
+					createCell(row, worlds[y * rows + x]);
+				}
 			}
 		}
 		
-		function createCell(row, innerHTML) {
+		function createCell(row, worldId) {
 			var cell = row.insertCell();
-			cell.innerHTML = innerHTML;
-			cell.onclick = function() {
-				var worldId = innerHTML;
-				cell.className = "";
-				cell.style = "background-color: #666666";
-				cell.respawnTime = moment().add(1000 * 60 * 12, "milliseconds");
-				setTimeout(function() { cell.style = style; }, 1000 * 60 * 12);
-				cell.innerHTML = innerHTML + " - " + timestampToString(1000 * 60 * 12);
-				var interval = setInterval(function() {
-					var remaining = cell.respawnTime.diff(moment());
-					if (remaining <= 0) {
-						clearInterval(interval);
-						cell.innerHTML = innerHTML;
-						cell.className = "bg-info";
-					} else {
-						cell.innerHTML = innerHTML + " - " + timestampToString(remaining);
+			cell.innerHTML = worldId;
+			cell.oncontextmenu = function() { return false };
+			cell.onmousedown = function(e) {
+				if (e.buttons == 1) {
+					cell.className = "";
+					cell.style = "background-color: #666666";
+					cell.respawnTime = moment().add(1000 * 60 * 12, "milliseconds");
+					cell.innerHTML = worldId + " - " + timestampToString(1000 * 60 * 12);
+					if (cell.interval) {
+						clearInterval(cell.interval);
 					}
-				}, 300);
-			}
+					cell.interval = setInterval(function() {
+						var remaining = cell.respawnTime.diff(moment());
+						if (remaining <= 0) {
+							// rune rock regenerated
+							clearInterval(cell.interval);
+							cell.innerHTML = worldId;
+							cell.className = "bg-info";
+						} else {
+							// update timer
+							cell.innerHTML = worldId + " - " + timestampToString(remaining);
+						}
+					}, 100);
+				} else if (e.buttons == 2) {
+					// reset cell
+					clearInterval(cell.interval);
+					cell.innerHTML = worldId;
+					cell.className = "";
+					cell.style = "";
+					cell.interval = null;
+				}
+			};
 		}
 		
 		function timestampToString(ts) {
@@ -70,7 +90,7 @@
 	<center>
 	<h1>Rune Rock Tracker</h1>
 	<div id="container" style="width: 600px" >
-		<table id="runite" class="table table-sm table-bordered table-active" style="table-layout: fixed"></table>
+		<table id="runite" class="table table-sm table-bordered table-active unselectable" style="table-layout: fixed"></table>
 	</div>
 	</center>
 </body>
