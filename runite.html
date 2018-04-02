@@ -18,11 +18,9 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.0/moment.min.js"></script>
 	<script>
-		// changes:
-		// add: queue of worlds
-		// split up rocks
+		var respawn_time_ms = 1000 * 60 * 12;
+		
 		window.onload = function() {
 			var worlds = [302, 303, 304, 305, 306, 307, 309, 310, 311, 312, 313, 314, 315, 317, 318, 319, 320, 321, 322,
 						  323, 324, 325, 327, 328, 329, 330, 331, 332, 333, 334, 336, 337, 338, 339, 340, 341, 342, 343,
@@ -30,46 +28,43 @@
 						  366, 367, 368, 369, 370, 373, 374, 375, 376, 377, 378, 386, 387, 388, 389, 390, 391, 392];
 			var rows = Math.floor((worlds.length + 3) / 4);
 			var table = document.getElementById("runite");
-			
 			for (var x = 0; x < rows; x++) {
 				var row = table.insertRow();
-				row.scope = "row";
 				var ncols = x + rows * 3 < worlds.length ? 4 : 3;
 				for (var y = 0; y < ncols; y++) {
-					createCell(row, worlds[y * rows + x]);
+					construct_cell(row, worlds[y * rows + x]);
 				}
 			}
 		}
 		
-		function createCell(row, worldId) {
+		function construct_cell(row, world_id) {
 			var cell = row.insertCell();
-			cell.innerHTML = worldId;
+			cell.innerHTML = world_id;
 			cell.oncontextmenu = function() { return false };
 			cell.onmousedown = function(e) {
 				if (e.buttons == 1) {
 					cell.className = "";
 					cell.style = "background-color: #666666";
-					cell.respawnTime = moment().add(1000 * 60 * 12, "milliseconds");
-					cell.innerHTML = worldId + " - " + timestampToString(1000 * 60 * 12);
-					if (cell.interval) {
+					cell.respawnTime = new Date().getTime() + respawn_time_ms;
+					cell.innerHTML = world_id + " - " + timestamp_to_string(respawn_time_ms);
+					if (cell.interval)
 						clearInterval(cell.interval);
-					}
 					cell.interval = setInterval(function() {
-						var remaining = cell.respawnTime.diff(moment());
+						var remaining = cell.respawnTime - new Date().getTime();
 						if (remaining <= 0) {
 							// rune rock regenerated
 							clearInterval(cell.interval);
-							cell.innerHTML = worldId;
+							cell.innerHTML = world_id;
 							cell.className = "bg-info";
 						} else {
 							// update timer
-							cell.innerHTML = worldId + " - " + timestampToString(remaining);
+							cell.innerHTML = world_id + " - " + timestamp_to_string(remaining);
 						}
-					}, 100);
+					}, 200);
 				} else if (e.buttons == 2) {
 					// reset cell
 					clearInterval(cell.interval);
-					cell.innerHTML = worldId;
+					cell.innerHTML = world_id;
 					cell.className = "";
 					cell.style = "";
 					cell.interval = null;
@@ -77,7 +72,7 @@
 			};
 		}
 		
-		function timestampToString(ts) {
+		function timestamp_to_string(ts) {
 			var m = Math.floor(ts / 60000);
 			var s = Math.floor((ts % 60000) / 1000).toString();
 			if (s.length == 1)
@@ -88,10 +83,10 @@
 </head>
 <body>
 	<center>
-	<h1>Rune Rock Tracker</h1>
-	<div id="container" style="width: 600px" >
-		<table id="runite" class="table table-sm table-bordered table-active unselectable" style="table-layout: fixed"></table>
-	</div>
+		<h1>Rune Rock Tracker</h1>
+		<div id="container" style="width: 600px" >
+			<table id="runite" class="table table-sm table-bordered table-active unselectable" style="table-layout: fixed"></table>
+		</div>
 	</center>
 </body>
 </html>
